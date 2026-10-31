@@ -105,7 +105,7 @@ uint32_t get_ram() {
 	return 0;
 }
 
-void vm_main(void) {
+void init_graphic() {
 	layer_hdl[0] = -1;
 	screen_w = vm_graphic_get_screen_width();
 	screen_h = vm_graphic_get_screen_height();
@@ -119,18 +119,33 @@ void vm_main(void) {
 	vm_graphic_fill_rect(layer_buf[1], 0, 0, screen_w, screen_h, tr_color, tr_color);
 	vm_graphic_fill_rect(layer_buf[0], 0, 0, screen_w, screen_h, 0, 0);
 
+	uiengine.def_buf = (unsigned short*)layer_buf[0];
+	t2input.scr_buf = (unsigned char*)layer_buf[1];
+	t2input.layer_handle = layer_hdl[1];
+}
+
+void vm_main(void) {
+	init_graphic();
+
 	uib = new UIBootMenu();
 
 	t2input.init();
 	uiengine.init();
 
-	uiengine.def_buf = (unsigned short*)layer_buf[0];
-	t2input.scr_buf = (unsigned char*)layer_buf[1];
-	t2input.layer_handle = layer_hdl[1];
-
 	uiengine.PushUI(uib);
 
-	//vm_reg_sysevt_callback(handle_sysevt);
+	vm_reg_sysevt_callback([](int msg, int p) 
+		{
+			switch (msg) {
+			case VM_MSG_ACTIVE:
+				init_graphic();
+				break;
+			case VM_MSG_INACTIVE:
+				vm_graphic_delete_layer(layer_hdl[1]);
+				vm_graphic_delete_layer(layer_hdl[0]);
+				break;
+			}
+		});
 	vm_reg_keyboard_callback(handle_keyevt);
 	vm_reg_pen_callback(handle_penevt);
 

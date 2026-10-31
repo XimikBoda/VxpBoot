@@ -62,7 +62,7 @@ class UIBootMenu : public UIMenuBase
 	UITextBox extraCmdInput = UITextBox(this, 5, 0, 230, 14, extra_cmd, 200);
 
 	UIButton bootButton = UIButton(this, 5, 0, 50, 14, "Boot", (ActOfClick)&UIBootMenu::ClickBoot);
-	UIButton resetButton = UIButton(this, 5, 0, 100, 14, "Reset to deault", (ActOfClick)&UIBootMenu::ClickReset);
+	UIButton resetButton = UIButton(this, 5, 0, 100, 14, "Reset to default", (ActOfClick)&UIBootMenu::ClickReset);
 
 	UIMenuElement uiarray[8] =
 	{											// Up, D, L, R,
