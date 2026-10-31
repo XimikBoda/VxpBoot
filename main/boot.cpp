@@ -7,11 +7,13 @@
 #include "string.h"
 #include <cstdint>
 
+#ifndef WIN32
+
 int linux_ram = 0;
 const char* cmdline = 0;
 
 
-#define UART_BASE       0xA0080000
+#define UART_BASE       ((volatile unsigned char *)0xA0080000)
 #define UART_THR        (*(volatile unsigned char *)(UART_BASE + 0x00))
 #define UART_DLL        (*(volatile unsigned char *)(UART_BASE + 0x00))
 #define UART_DLM        (*(volatile unsigned char *)(UART_BASE + 0x04))
@@ -21,6 +23,8 @@ const char* cmdline = 0;
 #define UART_MCR        (*(volatile unsigned char *)(UART_BASE + 0x10))
 #define UART_LSR        (*(volatile unsigned char *)(UART_BASE + 0x14))
 #define UART_HIGHSPEED  (*(volatile unsigned char *)(UART_BASE + 0x24))
+
+#define MPU_BASE		0xA0540000
 
 #define WDT_MODE (*(volatile unsigned short *)0xA0030000)
 
@@ -48,11 +52,65 @@ static inline void uputs(const char *s)
 	}
 }
 
+static inline void setup_uart(void)
+{
+	volatile int delay;
+
+	UART_HIGHSPEED = 0x00;
+	UART_LCR = 0x83;
+	UART_DLL = 0x07;
+	UART_DLM = 0x00;
+	UART_LCR = 0x03;
+	UART_FCR = 0x47;
+	UART_MCR = 0x03;
+	UART_IER = 0x00;
+
+	*(UART_BASE + 0x4C) = 0;
+	*(UART_BASE + 0x44) = 0;
+	*(UART_BASE + 0x48) = 0;
+	*(UART_BASE + 0x20) = 0;
+
+	UART_FCR = 0x07;
+
+	for (delay = 0; delay < 255; delay++) {
+	}
+}
+
+static inline void turn_off_mpu_protection() {
+	volatile uint32_t* mpu = (volatile uint32_t*)MPU_BASE;
+
+#define MPU_PROT_ATTR_MASK 0x000000E0
+	for (int i = 0; i < 16; i++) {
+		uint32_t current_val = mpu[i];
+		uint32_t base_addr = current_val & 0xFFFFF000;
+
+		if ((base_addr >> 24) != 0x10)
+			if ((current_val & MPU_PROT_ATTR_MASK) != 0)
+				mpu[i] = current_val & ~MPU_PROT_ATTR_MASK;
+	}
+}
+
+static inline void mask_all_irq() {
+	volatile uint32_t* irq_mask_set0 = (volatile uint32_t*)0xA0060020;
+	volatile uint32_t* irq_mask_set1 = (volatile uint32_t*)0xA0060024;
+	volatile uint32_t* irq_eoi0 = (volatile uint32_t*)0xA0060160;
+	volatile uint32_t* irq_eoi1 = (volatile uint32_t*)0xA0060164;
+
+	volatile uint32_t* adie_eoi = (volatile uint32_t*)0xA0760160;
+
+	*irq_mask_set0 = 0xFFFFFFFF;
+	*irq_mask_set1 = 0xFFFFFFFF;
+
+	*irq_eoi0 = 0xFFFFFFFF;
+	*irq_eoi1 = 0xFFFFFFFF;
+
+	*adie_eoi = 0xFFFFFFFF;
+}
+
 static void setup_atags(void)
 {
 	unsigned int* ptr = (unsigned int*)ATAGS_ADDR;
 
-	//const char* cmdline = "console=ttyS0,115200n8 debug user_debug=31 loglevel=8"; //earlyprintk keep_bootcon dhash_entries=1024 ihash_entries=1024 mhash_entries=1024 mphash_entries=1024
 	int cmdlen = 0;
 	int words;
 	char* dst;
@@ -98,55 +156,18 @@ extern "C" void __attribute__((noinline, noclone)) run_linux_safely()
 {
 	void (*kernel_entry)(int zero, int arch, unsigned int params);
 
-	uputs("Copying Image to 0xF0008000...\n"); 
 	memmove((void*)KERNEL_ADDR, g_kernel_src, g_kernel_size);
-	uputs("Kernel copied successfully!\n");
-
-	unsigned char* k_ptr = (unsigned char*)KERNEL_ADDR;
-	VMCHAR hex_buf[100];
-
-	uputs("Kernel start hex dump:\n");
-	sprintf(hex_buf, "%02X %02X %02X %02X %02X %02X %02X %02X\n",
-		k_ptr[0], k_ptr[1], k_ptr[2], k_ptr[3],
-		k_ptr[4], k_ptr[5], k_ptr[6], k_ptr[7]);
-	uputs(hex_buf);
-
-	sprintf(hex_buf, "%02X %02X %02X %02X %02X %02X %02X %02X\n",
-		k_ptr[8], k_ptr[9], k_ptr[10], k_ptr[11],
-		k_ptr[12], k_ptr[13], k_ptr[14], k_ptr[15]);
-	uputs(hex_buf);
-
-
-	uputs("setup_atags\n");
 
 	setup_atags();
-
-
-	uputs("kernel_entry\n");
 
 	kernel_entry = (void (*)(int, int, unsigned int))KERNEL_ADDR;
 	kernel_entry(0, MACH_TYPE_MTK, (unsigned int)ATAGS_ADDR);
 }
 
-static inline void arch_decomp_setup(void)
-{
-	volatile int delay;
-
-	UART_HIGHSPEED = 0x00;
-	UART_LCR = 0x83;
-	UART_DLL = 0x07;
-	UART_DLM = 0x00;
-	UART_LCR = 0x03;
-	UART_FCR = 0x47;
-	UART_MCR = 0x03;
-	UART_IER = 0x00;
-
-	for (delay = 0; delay < 255; delay++) {
-	}
-}
-
+#endif // !WIN32
 
 void boot(int ram, const char* cmd) {
+#ifndef WIN32
 	linux_ram = ram;
 	cmdline = cmd;
 
@@ -171,6 +192,7 @@ void boot(int ram, const char* cmd) {
 	vm_file_read(f, res, size, &rsize);
 	vm_file_close(f);
 
+
 	g_kernel_src = res;
 	g_kernel_size = size;
 
@@ -181,84 +203,19 @@ void boot(int ram, const char* cmd) {
 		::: "r0", "cc"
 	);
 
-	arch_decomp_setup();
+	setup_uart();
 
-	WDT_MODE = (WDT_MODE | 0x2200) & 0xFFFE;
+	WDT_MODE = (WDT_MODE | 0x2200) & 0xFFFE; //Disable WDT
 
-	VMCHAR s[100];
-	sprintf(s, "\n\rI at  0x%08X, stack at  0x%08X\n", vm_main, s);
-	uputs(s);
+	turn_off_mpu_protection();
 
-	{
-		volatile uint32_t* mpu = (volatile uint32_t*)0xA0540000;
-		volatile uint32_t* zero_page = (volatile uint32_t*)0x00000000;
-		char dbg_buf[64];
-
-		uputs("\n=== MPU STATE DUMP ===\n");
-
-		uputs("--- Start Addresses & Flags ---\n");
-		for (int i = 0; i < 16; i++) {
-			sprintf(dbg_buf, "MPU[0x%02X] = 0x%08X\n", i * 4, mpu[i]);
-			uputs(dbg_buf);
-		}
-
-		uputs("--- End Addresses ---\n");
-		for (int i = 16; i < 32; i++) {
-			sprintf(dbg_buf, "MPU[0x%02X] = 0x%08X\n", i * 4, mpu[i]);
-			uputs(dbg_buf);
-		}
-
-		uputs("\n=== MPU UNLOCK (BASE ONLY) ===\n");
-
-		for (int i = 0; i < 16; i++) {
-			#define MPU_PROT_ATTR_MASK 0x000000E0
-			uint32_t current_val = mpu[i];
-			uint32_t base_addr = current_val & 0xFFFFF000;
-
-			if ((base_addr >> 24) != 0x10) {
-
-				if ((current_val & MPU_PROT_ATTR_MASK) != 0) {
-					sprintf(dbg_buf, "Unlocking region %d (Base: 0x%08X, Flag: 0x%03X)\n",
-						i, base_addr, current_val & 0xFFF);
-					uputs(dbg_buf);
-
-					mpu[i] = current_val & ~MPU_PROT_ATTR_MASK;
-
-					sprintf(dbg_buf, "Patched to: 0x%08X\n", mpu[i]);
-					uputs(dbg_buf);
-				}
-			}
-		}
-
-	}
-
-	{
-		volatile uint32_t* irq_mask_set0 = (volatile uint32_t*)0xA0060020;
-		volatile uint32_t* irq_mask_set1 = (volatile uint32_t*)0xA0060024;
-		volatile uint32_t* irq_eoi0 = (volatile uint32_t*)0xA0060160;
-		volatile uint32_t* irq_eoi1 = (volatile uint32_t*)0xA0060164;
-
-		volatile uint32_t* adie_eoi = (volatile uint32_t*)0xA0760160;
-
-		uputs("\n=== SILENCING HARDWARE INTERRUPTS ===\n");
-
-		*irq_mask_set0 = 0xFFFFFFFF;
-		*irq_mask_set1 = 0xFFFFFFFF;
-
-		*irq_eoi0 = 0xFFFFFFFF;
-		*irq_eoi1 = 0xFFFFFFFF;
-
-		*adie_eoi = 0xFFFFFFFF;
-
-		uputs("All hardware interrupts masked and cleared.\n");
-		uputs("=========================================\n\n");
-	}
-
+	mask_all_irq();
 
 	__asm__ __volatile__(
 		"ldr sp, =0xF0700000\n\t"
 		"b run_linux_safely\n\t" 
 	);
 
+#endif // !WIN32
 }
 
