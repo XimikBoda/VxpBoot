@@ -224,9 +224,6 @@ void UIBootMenu::LoadSetting() {
 		&cpuSelector.cur_id, &ram_mb,
 		&consoleSelector.cur_id, &logoCheckBox.value,
 		extra_cmd);
-
-	if (scaned != 5)
-		ClickReset();
 }
 
 void UIBootMenu::SaveSetting() {
