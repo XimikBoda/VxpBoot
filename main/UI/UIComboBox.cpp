@@ -6,25 +6,6 @@
 
 extern UIEngine uiengine;
 
-static void draw_triangle(unsigned short* buf, int x1, int y1, int x2, int x3, int y3, unsigned short color) {
-	// 1---2
-	//  \ /
-	//   3
-	int miy = y1 < y3 ? y1 : y3;
-	int may = y1 > y3 ? y1 : y3;
-	for (int y = miy; y <= may; ++y) {
-		if (y < 0 || y >= screen_h)
-			continue;
-		int mix = (y - y1) * (x3 - x1) / (y3 - y1) + x1;
-		int max_ = (y - y1) * (x3 - x2) / (y3 - y1) + x2;
-		for (int x = mix; x <= max_; ++x) {
-			if (x < 0 || x >= screen_w)
-				continue;
-			buf[x + y * screen_w] = color;
-		}
-	}
-}
-
 UIComboBox::UIComboBox(UIBase* parent, int x, int y, int w, int h, int cur_id, GetListLen getListLen, GetListElement getListElement)
 {
 	this->parent = parent;
@@ -49,7 +30,7 @@ void UIComboBox::Draw(unsigned short* buf)
 		int x2 = x + w + -5;
 		int x3 = (x1 + x2) / 2;
 		int y1 = y + h / 2 + (x3 - x1), y3 = y + h / 2 - (x3 - x1);
-		draw_triangle(buf, x1, y1, x2, x3, y3, 0xFFFF);
+		Render::draw_triangle(buf, x1, y1, x2, x3, y3, 0xFFFF);
 	}
 
 	if (parent && getListLen && getListElement) {
@@ -90,7 +71,7 @@ void UIComboBox::QDraw(unsigned short* buf)
 		int x2 = x + w + -5;
 		int x3 = (x1 + x2) / 2;
 		int y1 = y + h / 2 - (x3 - x1), y3 = y + h / 2 + x3 - x1;
-		draw_triangle(buf, x1, y1, x2, x3, y3, 0xFFFF);
+		Render::draw_triangle(buf, x1, y1, x2, x3, y3, 0xFFFF);
 	}
 
 	if (parent && getListLen && getListElement) {

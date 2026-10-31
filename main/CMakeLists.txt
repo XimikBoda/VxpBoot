@@ -1,6 +1,8 @@
 set(TARGET_NAME "main")
 
 set(SOURCES main.cpp boot.cpp
+    UIBootMenu.h UIBootMenu.cpp
+
     UI/Profont6x11.h
     UI/UIBase.h
     UI/UIMenuBase.h UI/UIMenuBase.cpp
@@ -9,7 +11,7 @@ set(SOURCES main.cpp boot.cpp
     UI/UIComboBox.h UI/UIComboBox.cpp
     UI/UIButton.h UI/UIButton.cpp
     UI/UICheckBox.h UI/UICheckBox.cpp
-    UI/UIBootMenu.h UI/UIBootMenu.cpp
+    UI/UISpinBox.h UI/UISpinBox.cpp
     UI/T2Input.h UI/T2Input.cpp
     UI/Render.h UI/Render.cpp
 )

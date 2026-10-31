@@ -10,10 +10,10 @@
 
 #include "UI\T2Input.h"
 #include "UI\UIEngine.h"
-#include "UI\UIBootMenu.h"
 #include "UI\Render.h"
-
 #include "UI\ProFont6x11.h"
+
+#include "UIBootMenu.h"
 
 VMINT		layer_hdl[2];	// layer handle array. 
 VMUINT8* layer_buf[2] = {};

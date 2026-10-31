@@ -1,10 +1,11 @@
 #pragma once
-#include "UIBase.h"
-#include "UIMenuBase.h"
-#include "UIButton.h"
-#include "UITextBox.h"
-#include "UIComboBox.h"
-#include "UICheckBox.h"
+#include "UI/UIBase.h"
+#include "UI/UIMenuBase.h"
+#include "UI/UIButton.h"
+#include "UI/UITextBox.h"
+#include "UI/UIComboBox.h"
+#include "UI/UICheckBox.h"
+#include "UI/UISpinBox.h"
 #include <string>
 #include "vmstdlib.h"
 
@@ -45,12 +46,7 @@ class UIBootMenu : public UIMenuBase
 	int detected_ram = 0;
 	int detected_ram_mb = 0;
 
-	int ram_mb = 0;
-	char ram_str[21] = "";
-
-	UIButton addRamButton = UIButton(this, 5, 0, 14, 14, "+", (ActOfClick)&UIBootMenu::ClickAddRam);
-	UIButton subtractRamButton = UIButton(this, 5, 0, 14, 14, "-", (ActOfClick)&UIBootMenu::ClickSubtractRam);
-	UITextBox ramInput = UITextBox(this, 5, 0, 30, 14, ram_str, 20);
+	UISpinBox ramSpin = UISpinBox(this, 5, 0, 50, 14, "%d MB", "", (CheckLimit)&UIBootMenu::CheckRamLimit);
 
 	UIComboBox consoleSelector = UIComboBox(this, 5, 0, 230, 14, 0,
 		(GetListLen)&UIBootMenu::ConsoleGetLen,
@@ -65,22 +61,20 @@ class UIBootMenu : public UIMenuBase
 	UIButton bootButton = UIButton(this, 5, 0, 50, 14, "Boot", (ActOfClick)&UIBootMenu::ClickBoot);
 	UIButton resetButton = UIButton(this, 5, 0, 100, 14, "Reset to deault", (ActOfClick)&UIBootMenu::ClickReset);
 
-	UIMenuElement uiarray[9] =
+	UIMenuElement uiarray[7] =
 	{											// Up, D, L, R,
-		{(UIBase*)&(UIBootMenu::cpuSelector),		8, 1, 0, 0}, //0
+		{(UIBase*)&(UIBootMenu::cpuSelector),		5, 1, 0, 0}, //0
 
-		{(UIBase*)&(UIBootMenu::addRamButton),		0, 4, 3, 2}, //1
-		{(UIBase*)&(UIBootMenu::subtractRamButton),	0, 4, 1, 3}, //2
-		{(UIBase*)&(UIBootMenu::ramInput),			0, 4, 2, 1}, //3
+		{(UIBase*)&(UIBootMenu::ramSpin),			0, 2, 1, 1}, //1
 
-		{(UIBase*)&(UIBootMenu::consoleSelector),	1, 5, 4, 4}, //4
+		{(UIBase*)&(UIBootMenu::consoleSelector),	1, 3, 2, 2}, //2
 
-		{(UIBase*)&(UIBootMenu::logoCheckBox),		4, 6, 5, 5}, //5
+		{(UIBase*)&(UIBootMenu::logoCheckBox),		2, 4, 3, 3}, //3
 
-		{(UIBase*)&(UIBootMenu::extraCmdInput),		5, 7, 6, 6}, //6
+		{(UIBase*)&(UIBootMenu::extraCmdInput),		3, 5, 4, 4}, //4
 
-		{(UIBase*)&(UIBootMenu::bootButton),		6, 0, 8, 8}, //7
-		{(UIBase*)&(UIBootMenu::resetButton),		6, 0, 7, 7}, //8
+		{(UIBase*)&(UIBootMenu::bootButton),		4, 0, 6, 6}, //5
+		{(UIBase*)&(UIBootMenu::resetButton),		4, 0, 5, 5}, //6
 	};
 
 public:
@@ -95,9 +89,22 @@ private:
 	const char* CpusGetElement(int id);
 	int getSelectedCpu();
 
-	void UpdateRamStr();
-	void ClickAddRam();
-	void ClickSubtractRam();
+	int CheckRamLimit(int val) {
+		if (val < 1)
+			val = 1;
+
+		if (val != detected_ram_mb) {
+			static char tmp[32] = "";
+
+			sprintf(tmp, "from %d MB detected", detected_ram_mb);
+
+			ramSpin.label = tmp;
+		}
+		else
+			ramSpin.label = "";
+			
+		return val;
+	}
 
 	int ConsoleGetLen();
 	const char* ConsoleGetElement(int id);

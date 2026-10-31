@@ -1,6 +1,6 @@
 #include "UIBootMenu.h"
-#include "Render.h"
-#include "UIEngine.h"
+#include "UI/Render.h"
+#include "UI/UIEngine.h"
 #include "vmstdlib.h"
 #include "vmio.h"
 #include "string.h"
@@ -17,10 +17,6 @@ uint32_t get_ram();
 UIBootMenu::UIBootMenu() {
 	uiarray_internal = uiarray;
 	uiarray_size_internal = sizeof(uiarray) / sizeof(uiarray[0]);
-
-	addRamButton.x = 5;
-	subtractRamButton.x = addRamButton.x + addRamButton.w + 2;
-	ramInput.x = subtractRamButton.x + subtractRamButton.w + 5;
 
 	resetButton.x = bootButton.x + bootButton.w + 5;
 
@@ -56,17 +52,7 @@ void UIBootMenu::Draw(unsigned short* buf)
 	Render::draw_text_white(buf, 5, y, "Ram size:");
 	y += 15;
 
-	addRamButton.y = y;
-	subtractRamButton.y = y;
-	ramInput.y = y;
-	{
-		char tmp[100] = "MB";
-		if(ramInput.isFocused)
-			sscanf(ram_str, "%d", &ram_mb);
-		if (ram_mb != detected_ram_mb)
-			sprintf(tmp, "MB from %d MB detected", detected_ram_mb);
-		Render::draw_text_white(buf, 5 + ramInput.x + ramInput.w, y + 3, tmp);
-	}
+	ramSpin.y = y;
 
 	y += 20;
 	Render::draw_text_white(buf, 5, y, "Console:");
@@ -147,22 +133,6 @@ int UIBootMenu::getSelectedCpu() {
 	}
 }
 
-void UIBootMenu::UpdateRamStr() {
-	sprintf(ram_str, "%d", ram_mb);
-}
-
-void UIBootMenu::ClickAddRam() {
-	ram_mb++;
-	UpdateRamStr();
-
-}
-
-void UIBootMenu::ClickSubtractRam() {
-	if (ram_mb > 0)
-		ram_mb--;
-	UpdateRamStr();
-}
-
 int UIBootMenu::ConsoleGetLen() {
 	return sizeof(console_modes) / sizeof(console_modes[0]);
 }
@@ -184,7 +154,7 @@ void UIBootMenu::ClickBoot() {
 
 	void boot(int ram, const char* cmd, int cpu);
 
-	boot(ram_mb * 1024 * 1024, cmdline, getSelectedCpu());
+	boot(ramSpin.value * 1024 * 1024, cmdline, getSelectedCpu());
 }
 
 void UIBootMenu::ClickReset() {
@@ -192,8 +162,7 @@ void UIBootMenu::ClickReset() {
 	cpuSelector.cur_id = getDefCpu();
 
 	//RAM
-	ram_mb = detected_ram_mb;
-	UpdateRamStr();
+	ramSpin.value = detected_ram_mb;
 
 	//Console
 	consoleSelector.cur_id = 0;
@@ -221,7 +190,7 @@ void UIBootMenu::LoadSetting() {
 	tmp[readed] = '\0';
 
 	int scaned = sscanf(tmp, "%d %d\n%d %d\n%200[^\n]",
-		&cpuSelector.cur_id, &ram_mb,
+		&cpuSelector.cur_id, &ramSpin.value,
 		&consoleSelector.cur_id, &logoCheckBox.value,
 		extra_cmd);
 }
@@ -229,7 +198,7 @@ void UIBootMenu::LoadSetting() {
 void UIBootMenu::SaveSetting() {
 	char tmp[512] = "";
 	sprintf(tmp, "%d %d\n%d %d\n%s\n", 
-		cpuSelector.cur_id, ram_mb,
+		cpuSelector.cur_id, ramSpin.value,
 		consoleSelector.cur_id, logoCheckBox.value,
 		extra_cmd);
 	

@@ -83,4 +83,23 @@ namespace Render {
 	void draw_fill_rect_with_borders(unsigned short* buf, int x, int y, int w, int h, unsigned short fill_color, unsigned short border_color) {
 		vm_graphic_fill_rect((VMUINT8*)buf, x, y, w, h, border_color, fill_color);
 	}
+
+	void draw_triangle(unsigned short* buf, int x1, int y1, int x2, int x3, int y3, unsigned short color) {
+		// 1---2
+		//  \ /
+		//   3
+		int miy = y1 < y3 ? y1 : y3;
+		int may = y1 > y3 ? y1 : y3;
+		for (int y = miy; y <= may; ++y) {
+			if (y < 0 || y >= screen_h)
+				continue;
+			int mix = (y - y1) * (x3 - x1) / (y3 - y1) + x1;
+			int max_ = (y - y1) * (x3 - x2) / (y3 - y1) + x2;
+			for (int x = mix; x <= max_; ++x) {
+				if (x < 0 || x >= screen_w)
+					continue;
+				buf[x + y * screen_w] = color;
+			}
+		}
+	}
 }

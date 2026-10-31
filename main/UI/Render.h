@@ -14,5 +14,7 @@ namespace Render{
 
 	void draw_fill_rect(unsigned short* buf, int x, int y, int w, int h, unsigned short color);
 	void draw_fill_rect_with_borders(unsigned short* buf, int x, int y, int w, int h, unsigned short fill_color, unsigned short border_color);
+
+	void draw_triangle(unsigned short* buf, int x1, int y1, int x2, int x3, int y3, unsigned short color);
 };
 
