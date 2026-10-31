@@ -61,6 +61,12 @@ void UIBootMenu::Draw(unsigned short* buf)
 	consoleSelector.y = y;
 
 	y += 20;
+	Render::draw_text_white(buf, 5, y, "Screen:");
+	y += 15;
+
+	fpsSpin.y = y;
+
+	y += 20;
 	logoCheckBox.y = y;
 
 	y += 20;
@@ -133,6 +139,35 @@ int UIBootMenu::getSelectedCpu() {
 	}
 }
 
+int UIBootMenu::CheckRamLimit(int val) {
+	if (val < 1)
+		val = 1;
+
+	if (val != detected_ram_mb) {
+		static char tmp[32] = "";
+
+		sprintf(tmp, "from %d MB detected", detected_ram_mb);
+
+		ramSpin.label = tmp;
+	}
+	else
+		ramSpin.label = "";
+
+	return val;
+}
+
+int UIBootMenu::CheckFpsLimit(int val) {
+	if (val < 1)
+		val = 1;
+
+	if (val > 30) 
+		fpsSpin.label = "> 30 can be unstable";
+	else
+		fpsSpin.label = "";
+
+	return val;
+}
+
 int UIBootMenu::ConsoleGetLen() {
 	return sizeof(console_modes) / sizeof(console_modes[0]);
 }
@@ -145,11 +180,16 @@ static char cmdline[500] = "";
 void UIBootMenu::ClickBoot() {
 	SaveSetting();
 
-	sprintf(cmdline, "%s fbcon=map:0,font:6x11 %s mtk_cpu_name=MT%04d device_model=%s %s ",
+	sprintf(cmdline, 
+		"%s " // console 
+		"fbcon=map:0,font:6x11 %s " // fbcon
+		"mtk_cpu_name=MT%04d device_model=%s " // names
+		"mt62xx_fb.width=%d mt62xx_fb.height=%d mt62xx_fb.fps=%d " //screen
+		"%s ", // extra cmdline
 		console_modes[consoleSelector.cur_id].cmd,
 		(!logoCheckBox.value ? "logo.nologo" : ""),
-		getSelectedCpu(),
-		get_model_name(),
+		getSelectedCpu(), get_model_name(),
+		vm_graphic_get_screen_width(), vm_graphic_get_screen_height(), fpsSpin.value,
 		extra_cmd);
 
 	void boot(int ram, const char* cmd, int cpu);
@@ -166,6 +206,9 @@ void UIBootMenu::ClickReset() {
 
 	//Console
 	consoleSelector.cur_id = 0;
+
+	//Screen
+	fpsSpin.value = 15;
 
 	logoCheckBox.value = true;
 
@@ -189,17 +232,19 @@ void UIBootMenu::LoadSetting() {
 
 	tmp[readed] = '\0';
 
-	int scaned = sscanf(tmp, "%d %d\n%d %d\n%200[^\n]",
+	int scaned = sscanf(tmp, "%d %d\n%d\n%d %d\n%200[^\n]",
 		&cpuSelector.cur_id, &ramSpin.value,
-		&consoleSelector.cur_id, &logoCheckBox.value,
+		&consoleSelector.cur_id, 
+		&fpsSpin.value, &logoCheckBox.value,
 		extra_cmd);
 }
 
 void UIBootMenu::SaveSetting() {
 	char tmp[512] = "";
-	sprintf(tmp, "%d %d\n%d %d\n%s\n", 
+	sprintf(tmp, "%d %d\n%d\n%d %d\n%s\n", 
 		cpuSelector.cur_id, ramSpin.value,
-		consoleSelector.cur_id, logoCheckBox.value,
+		consoleSelector.cur_id, 
+		fpsSpin.value, logoCheckBox.value,
 		extra_cmd);
 	
 	int h = vm_file_open(save_file_path, MODE_CREATE_ALWAYS_WRITE, 1);
