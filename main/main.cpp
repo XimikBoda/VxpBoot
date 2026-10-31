@@ -85,7 +85,7 @@ uint32_t get_ram() {
 
 	for (int i = 0; i < 16; i++)
 		if ((mpu_base[i] & 0xFFFFF000) == 0xF0008000)
-			return mpu_base[i + 16] & 0x00FFFFFF;
+			return mpu_base[i + 16] & 0x0FFFFFFF;
 
 	return 0;
 }
@@ -126,3 +126,11 @@ void vm_main(void) {
 }
 
 
+void* operator new(size_t size) {
+	void* p = vm_malloc(size);
+	return p;
+}
+
+void operator delete(void* p) {
+	vm_free(p);
+}

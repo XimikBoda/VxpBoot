@@ -5,6 +5,7 @@
 #include "UITextBox.h"
 #include "UIComboBox.h"
 #include <string>
+#include "vmstdlib.h"
 
 struct console_mode_t {
 	const char* name;
@@ -17,7 +18,7 @@ const console_mode_t console_modes[12] =
 	{"USB",							"console=ttyGS0"},
 	{"UART",						"console=ttyS0,115200n8"},
 
-	{"Screen (main) + USB",			"console=ttyGS0 console=tty0 console=tty0"},
+	{"Screen (main) + USB",			"console=ttyGS0 console=tty0"},
 	{"Screen (main) + UART",		"console=ttyS0,115200n8 console=tty0"},
 
 	{"USB (main) + Screen",			"console=tty0 console=ttyGS0"},
@@ -57,7 +58,7 @@ class UIBootMenu : public UIMenuBase
 	UIButton subtractTuxButton = UIButton(this, 5, 0, 14, 14, "-", (ActOfClick)&UIBootMenu::ClickSubtractTux);
 	UITextBox tuxInput = UITextBox(this, 5, 0, 30, 14, tux_count_str, 20);
 
-	UIComboBox consoleSelector = UIComboBox(this, 5, 0, 200, 14, 0,
+	UIComboBox consoleSelector = UIComboBox(this, 5, 0, 230, 14, 0,
 		(GetListLen)&UIBootMenu::ConsoleGetLen,
 		(GetListElement)&UIBootMenu::ConsoleGetElement);
 

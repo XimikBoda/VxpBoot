@@ -157,7 +157,8 @@ void UIBootMenu::ClickAddRam() {
 }
 
 void UIBootMenu::ClickSubtractRam() {
-	ram_mb--;
+	if (ram_mb > 0)
+		ram_mb--;
 	UpdateRamStr();
 }
 
@@ -172,7 +173,8 @@ void UIBootMenu::ClickAddTux() {
 }
 
 void UIBootMenu::ClickSubtractTux() {
-	tux_count--;
+	if (tux_count > 0)
+		tux_count--;
 	UpdateTuxStr();
 }
 
@@ -184,9 +186,12 @@ const char* UIBootMenu::ConsoleGetElement(int id) {
 	return console_modes[id].name;
 }
 
+static char cmdline[500] = "";
 void UIBootMenu::ClickBoot() {
-	char cmdline[500] = "";
-	sprintf(cmdline, "%s fbcon=map:0 fbcon=font:8x16 fbcon=logo-count:%d %s ", console_modes[consoleSelector.cur_id].cmd, tux_count, extra_cmd);
+	sprintf(cmdline, "%s fbcon=map:0,font:6x11,logo-count:%d %s %s ", 
+		console_modes[consoleSelector.cur_id].cmd, 
+		tux_count, (tux_count == 0 ? "logo.nologo" : ""), 
+		extra_cmd);
 
 	void boot(int ram, const char* cmd);
 
