@@ -9,6 +9,7 @@
 extern UIEngine uiengine;
 
 const char* get_cpu();
+const char* get_model_name();
 uint32_t get_ram();
 
 UIBootMenu::UIBootMenu() {
@@ -18,11 +19,6 @@ UIBootMenu::UIBootMenu() {
 	addRamButton.x = 5;
 	subtractRamButton.x = addRamButton.x + addRamButton.w + 2;
 	ramInput.x = subtractRamButton.x + subtractRamButton.w + 5;
-
-
-	addTuxButton.x = 5;
-	subtractTuxButton.x = addTuxButton.x + addTuxButton.w + 2;
-	tuxInput.x = subtractTuxButton.x + subtractTuxButton.w + 5;
 
 	strcpy(detected_cpu, get_cpu());
 	if(detected_cpu[0] == 'M' && detected_cpu[1] == 'T')
@@ -35,7 +31,7 @@ UIBootMenu::UIBootMenu() {
 	ram_mb = detected_ram_mb;
 	UpdateRamStr();
 
-	UpdateTuxStr();
+	logoCheckBox.value = true;
 }
 
 void UIBootMenu::Draw(unsigned short* buf)
@@ -72,22 +68,13 @@ void UIBootMenu::Draw(unsigned short* buf)
 	}
 
 	y += 20;
-	Render::draw_text_white(buf, 5, y, "Tux count (don`t ask):");
-	y += 15;
-
-	addTuxButton.y = y;
-	subtractTuxButton.y = y;
-	tuxInput.y = y;
-
-	if (tuxInput.isFocused)
-		sscanf(tux_count_str, "%d", &tux_count);
-		
-
-	y += 20;
 	Render::draw_text_white(buf, 5, y, "Console:");
 	y += 15;
 
 	consoleSelector.y = y;
+
+	y += 20;
+	logoCheckBox.y = y;
 
 	y += 20;
 	Render::draw_text_white(buf, 5, y, "Extra cmdline:");
@@ -146,6 +133,19 @@ const char* UIBootMenu::CpusGetElement(int id)
 	return str;
 }
 
+int UIBootMenu::getSelectedCpu() {
+	switch (cpuSelector.cur_id) {
+	case 0:
+		return 6250;
+	case 1:
+		return 6260;
+	case 2:
+		return 6261;
+	case 3: 
+		return detected_cpu_num;
+	}
+}
+
 void UIBootMenu::UpdateRamStr() {
 	sprintf(ram_str, "%d", ram_mb);
 }
@@ -162,22 +162,6 @@ void UIBootMenu::ClickSubtractRam() {
 	UpdateRamStr();
 }
 
-void UIBootMenu::UpdateTuxStr() {
-	sprintf(tux_count_str, "%d", tux_count);
-}
-
-void UIBootMenu::ClickAddTux() {
-	tux_count++;
-	UpdateTuxStr();
-
-}
-
-void UIBootMenu::ClickSubtractTux() {
-	if (tux_count > 0)
-		tux_count--;
-	UpdateTuxStr();
-}
-
 int UIBootMenu::ConsoleGetLen() {
 	return sizeof(console_modes) / sizeof(console_modes[0]);
 }
@@ -188,12 +172,14 @@ const char* UIBootMenu::ConsoleGetElement(int id) {
 
 static char cmdline[500] = "";
 void UIBootMenu::ClickBoot() {
-	sprintf(cmdline, "%s fbcon=map:0,font:6x11,logo-count:%d %s %s ", 
-		console_modes[consoleSelector.cur_id].cmd, 
-		tux_count, (tux_count == 0 ? "logo.nologo" : ""), 
+	sprintf(cmdline, "%s fbcon=map:0,font:6x11 %s mtk_cpu_name=MT%04d device_model=%s %s ",
+		console_modes[consoleSelector.cur_id].cmd,
+		(!logoCheckBox.value ? "logo.nologo" : ""),
+		getSelectedCpu(),
+		get_model_name(),
 		extra_cmd);
 
-	void boot(int ram, const char* cmd);
+	void boot(int ram, const char* cmd, int cpu);
 
-	boot(ram_mb * 1024 * 1024, cmdline);
+	boot(ram_mb * 1024 * 1024, cmdline, getSelectedCpu());
 }

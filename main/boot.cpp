@@ -10,6 +10,7 @@
 #ifndef WIN32
 
 int linux_ram = 0;
+int cpu_num = 0;
 const char* cmdline = 0;
 
 
@@ -35,6 +36,7 @@ const char* cmdline = 0;
 
 #define ATAG_CORE       0x54410001
 #define ATAG_MEM        0x54410002
+#define ATAG_REVISION	0x54410007
 #define ATAG_CMDLINE    0x54410009
 #define ATAG_NONE       0x00000000
 
@@ -127,6 +129,10 @@ static void setup_atags(void)
 	*ptr++ = linux_ram;
 	*ptr++ = RAM_BASE;
 
+	*ptr++ = 3;
+	*ptr++ = ATAG_REVISION;
+	*ptr++ = cpu_num;
+
 	while (cmdline[cmdlen] != '\0') {
 		cmdlen++;
 	}
@@ -166,10 +172,11 @@ extern "C" void __attribute__((noinline, noclone)) run_linux_safely()
 
 #endif // !WIN32
 
-void boot(int ram, const char* cmd) {
+void boot(int ram, const char* cmd, int cpu) {
 #ifndef WIN32
 	linux_ram = ram;
 	cmdline = cmd;
+	cpu_num = cpu;
 
 	VMINT size = 0;
 	//VMUINT8* res = vm_load_resource("Image", &size);

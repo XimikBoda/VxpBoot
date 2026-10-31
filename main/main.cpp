@@ -76,6 +76,21 @@ const char* get_cpu() {
 	return cpu;
 }
 
+const char* get_model_name() {
+#ifdef WIN32
+	static char model_name[100] = "MREmu";
+#else
+	static char model_name[100] = "";
+	vm_get_device_info(VM_DEV_INFO_MODEL_NUMBER, model_name);
+#endif // WIN32
+
+	for (int i = 0; model_name[i]; ++i)
+		if (model_name[i] == ' ')
+			model_name[i] = '_';
+
+	return model_name;
+}
+
 uint32_t get_ram() {
 #ifdef WIN32
 	return 8 * 1024 * 1024;
