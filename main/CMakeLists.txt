@@ -8,6 +8,7 @@ set(SOURCES main.cpp boot.cpp
     UITextBox.h UITextBox.cpp
     UIComboBox.h UIComboBox.cpp
     UIButton.h UIButton.cpp
+    UICheckBox.h UICheckBox.cpp
     UIBootMenu.h UIBootMenu.cpp
     T2Input.h T2Input.cpp
     Render.h Render.cpp
