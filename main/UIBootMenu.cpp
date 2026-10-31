@@ -8,6 +8,8 @@
 
 extern UIEngine uiengine;
 
+const VMWSTR save_file_path = (VMWSTR)u"e:\\VxpBoot.cfg";
+
 const char* get_cpu();
 const char* get_model_name();
 uint32_t get_ram();
@@ -20,18 +22,17 @@ UIBootMenu::UIBootMenu() {
 	subtractRamButton.x = addRamButton.x + addRamButton.w + 2;
 	ramInput.x = subtractRamButton.x + subtractRamButton.w + 5;
 
+	resetButton.x = bootButton.x + bootButton.w + 5;
+
 	strcpy(detected_cpu, get_cpu());
 	if(detected_cpu[0] == 'M' && detected_cpu[1] == 'T')
 		sscanf(detected_cpu + 2, "%d", &detected_cpu_num);
-	
-	cpuSelector.cur_id = getDefCpu();
 
 	detected_ram = get_ram();
 	detected_ram_mb = detected_ram / 1024 / 1024;
-	ram_mb = detected_ram_mb;
-	UpdateRamStr();
 
-	logoCheckBox.value = true;
+	ClickReset();
+	LoadSetting();
 }
 
 void UIBootMenu::Draw(unsigned short* buf)
@@ -84,13 +85,13 @@ void UIBootMenu::Draw(unsigned short* buf)
 
 	y += 20;
 	bootButton.y = y;
+	resetButton.y = y;
 
 	for (int i = 0; i < uiarray_size_internal; ++i)
 		uiarray[i].el->QDraw(buf);
 }
 
-void UIBootMenu::RightSoftkeyClick() { 
-	//uiengine.PopUI(); 
+void UIBootMenu::RightSoftkeyClick() {
 }
 
 int UIBootMenu::CpusGetLen() {
@@ -172,6 +173,8 @@ const char* UIBootMenu::ConsoleGetElement(int id) {
 
 static char cmdline[500] = "";
 void UIBootMenu::ClickBoot() {
+	SaveSetting();
+
 	sprintf(cmdline, "%s fbcon=map:0,font:6x11 %s mtk_cpu_name=MT%04d device_model=%s %s ",
 		console_modes[consoleSelector.cur_id].cmd,
 		(!logoCheckBox.value ? "logo.nologo" : ""),
@@ -182,4 +185,60 @@ void UIBootMenu::ClickBoot() {
 	void boot(int ram, const char* cmd, int cpu);
 
 	boot(ram_mb * 1024 * 1024, cmdline, getSelectedCpu());
+}
+
+void UIBootMenu::ClickReset() {
+	//CPU
+	cpuSelector.cur_id = getDefCpu();
+
+	//RAM
+	ram_mb = detected_ram_mb;
+	UpdateRamStr();
+
+	//Console
+	consoleSelector.cur_id = 0;
+
+	logoCheckBox.value = true;
+
+	// Cmdline	
+	extra_cmd[0] = '\0';
+}
+
+void UIBootMenu::LoadSetting() {
+	char tmp[512] = "";
+	int h = vm_file_open(save_file_path, MODE_READ, 1);
+	if (h < 0) return;
+
+	VMUINT readed = 0, size = 0;
+	vm_file_getfilesize(h, &size);
+
+	if (size >= sizeof(tmp))
+		size = sizeof(tmp) - 1;
+
+	vm_file_read(h, tmp, size, &readed);
+	vm_file_close(h);
+
+	tmp[readed] = '\0';
+
+	int scaned = sscanf(tmp, "%d %d\n%d %d\n%200[^\n]",
+		&cpuSelector.cur_id, &ram_mb,
+		&consoleSelector.cur_id, &logoCheckBox.value,
+		extra_cmd);
+
+	if (scaned != 5)
+		ClickReset();
+}
+
+void UIBootMenu::SaveSetting() {
+	char tmp[512] = "";
+	sprintf(tmp, "%d %d\n%d %d\n%s\n", 
+		cpuSelector.cur_id, ram_mb,
+		consoleSelector.cur_id, logoCheckBox.value,
+		extra_cmd);
+	
+	int h = vm_file_open(save_file_path, MODE_CREATE_ALWAYS_WRITE, 1);
+	if (h < 0) return;
+	VMUINT writen = 0;
+	vm_file_write(h, tmp, strlen(tmp), &writen);
+	vm_file_close(h);
 }

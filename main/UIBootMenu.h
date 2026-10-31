@@ -63,10 +63,11 @@ class UIBootMenu : public UIMenuBase
 	UITextBox extraCmdInput = UITextBox(this, 5, 0, 230, 14, extra_cmd, 200);
 
 	UIButton bootButton = UIButton(this, 5, 0, 50, 14, "Boot", (ActOfClick)&UIBootMenu::ClickBoot);
+	UIButton resetButton = UIButton(this, 5, 0, 100, 14, "Reset to deault", (ActOfClick)&UIBootMenu::ClickReset);
 
-	UIMenuElement uiarray[8] =
-	{
-		{(UIBase*)&(UIBootMenu::cpuSelector),		7, 1, 0, 0}, //0
+	UIMenuElement uiarray[9] =
+	{											// Up, D, L, R,
+		{(UIBase*)&(UIBootMenu::cpuSelector),		8, 1, 0, 0}, //0
 
 		{(UIBase*)&(UIBootMenu::addRamButton),		0, 4, 3, 2}, //1
 		{(UIBase*)&(UIBootMenu::subtractRamButton),	0, 4, 1, 3}, //2
@@ -78,7 +79,8 @@ class UIBootMenu : public UIMenuBase
 
 		{(UIBase*)&(UIBootMenu::extraCmdInput),		5, 7, 6, 6}, //6
 
-		{(UIBase*)&(UIBootMenu::bootButton),		6, 0, 7, 7}, //7
+		{(UIBase*)&(UIBootMenu::bootButton),		6, 0, 8, 8}, //7
+		{(UIBase*)&(UIBootMenu::resetButton),		6, 0, 7, 7}, //8
 	};
 
 public:
@@ -87,7 +89,6 @@ public:
 	void Draw(unsigned short* buf) override;
 private:
 	void RightSoftkeyClick() override;
-
 
 	int CpusGetLen();
 	int getDefCpu();
@@ -102,5 +103,9 @@ private:
 	const char* ConsoleGetElement(int id);
 
 	void ClickBoot();
+	void ClickReset();
+
+	void LoadSetting();
+	void SaveSetting();
 };
 
