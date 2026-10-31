@@ -1,17 +1,17 @@
 set(TARGET_NAME "main")
 
 set(SOURCES main.cpp boot.cpp
-    Profont6x11.h
-    UIBase.h
-    UIMenuBase.h UIMenuBase.cpp
-    UIEngine.h UIEngine.cpp
-    UITextBox.h UITextBox.cpp
-    UIComboBox.h UIComboBox.cpp
-    UIButton.h UIButton.cpp
-    UICheckBox.h UICheckBox.cpp
-    UIBootMenu.h UIBootMenu.cpp
-    T2Input.h T2Input.cpp
-    Render.h Render.cpp
+    UI/Profont6x11.h
+    UI/UIBase.h
+    UI/UIMenuBase.h UI/UIMenuBase.cpp
+    UI/UIEngine.h UI/UIEngine.cpp
+    UI/UITextBox.h UI/UITextBox.cpp
+    UI/UIComboBox.h UI/UIComboBox.cpp
+    UI/UIButton.h UI/UIButton.cpp
+    UI/UICheckBox.h UI/UICheckBox.cpp
+    UI/UIBootMenu.h UI/UIBootMenu.cpp
+    UI/T2Input.h UI/T2Input.cpp
+    UI/Render.h UI/Render.cpp
 )
 
 add_exec_vxp(${TARGET_NAME} 

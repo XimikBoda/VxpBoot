@@ -8,12 +8,12 @@
 #include "string.h"
 #include <cstdint>
 
-#include "T2Input.h"
-#include "UIEngine.h"
-#include "UIBootMenu.h"
-#include "Render.h"
+#include "UI\T2Input.h"
+#include "UI\UIEngine.h"
+#include "UI\UIBootMenu.h"
+#include "UI\Render.h"
 
-#include "ProFont6x11.h"
+#include "UI\ProFont6x11.h"
 
 VMINT		layer_hdl[2];	// layer handle array. 
 VMUINT8* layer_buf[2] = {};
